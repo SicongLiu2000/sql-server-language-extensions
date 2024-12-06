@@ -11,7 +11,13 @@
 #include <string>
 #include <iostream>
 #include <stdio.h>
-#include <windows.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>  // Windows-specific header
+#else
+#include <unistd.h>   // Linux-specific includes (if needed)
+#endif
+
 #include "Logger.h"
 
 using namespace std;
@@ -25,7 +31,7 @@ using namespace std;
 void Logger::Log(const string &msg)
 {
 #ifdef DEBUG
-    cout << msg <<endl;
+    cout << msg << endl;  // Output to standard output in debug mode
 #endif
 }
 
@@ -37,5 +43,5 @@ void Logger::Log(const string &msg)
 //
 void Logger::LogError(const string &errorMsg)
 {
-    cerr << "Error: " << errorMsg <<endl;
+    cerr << "Error: " << errorMsg << endl;  // Output error to standard error
 }

@@ -20,7 +20,15 @@
 #include <coreclr_delegates.h>
 #include <hostfxr.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+// Windows-specific includes
 #include <windows.h>
+#else
+// Linux-specific includes
+#include <pthread.h>  // POSIX threads
+#include <unistd.h>   // For sleep
+#endif
+
 #include <sql.h>
 #include "sqlexternallanguage.h"
 #include "sqlexternallibrary.h"

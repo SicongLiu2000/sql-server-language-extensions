@@ -1,17 +1,11 @@
-//*********************************************************************
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-//
-// @File: nativecsharpextension.cpp
-//
-// Purpose:
-//  Implement the native language extensions APIs
-//
-//*********************************************************************
 #include "nativecsharpextension.h"
 #include "Logger.h"
 
 #define nameof(x) #x
+
+#if defined(_WIN32) || defined(_WIN64)
+    #include <windows.h> // Only needed on Windows
+#endif
 
 //--------------------------------------------------------------------------------------------------
 // Name: UTF8PtrToStr
@@ -62,11 +56,14 @@ SQLRETURN Init(
 )
 {
     LOG("nativecsharpextension::Init");
+    
+    // Create DotnetEnvironment instance
     g_dotnet_runtime = new DotnetEnvironment(
         UTF8PtrToStr(languageParams, languageParamsLen),
         UTF8PtrToStr(languagePath, languagePathLen),
         UTF8PtrToStr(publicLibraryPath, publicLibraryPathLen),
-        UTF8PtrToStr(privateLibraryPath, privateLibraryPathLen));
+        UTF8PtrToStr(privateLibraryPath, privateLibraryPathLen)
+    );
 
     SQLRETURN err = g_dotnet_runtime->Init();
     return err != 0 ? err :
@@ -83,11 +80,11 @@ SQLRETURN Init(
 
 // --------------------------------------------------------------------------------------------------
 // Name: InitSession
-
+//
 // Description:
 //  Initializes session-specific data. We store the schema, parameter info,
 //  output input data info here.
-
+//
 // Returns:
 //  SQL_SUCCESS on success, else SQL_ERROR
 //
@@ -224,120 +221,4 @@ SQLRETURN Execute(
         data,
         strLen_or_Ind,
         outputSchemaColumnsNumber);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Name: GetResultColumn
-//
-// Description:
-//  Returns information about the output column
-//
-// Returns:
-//  SQL_SUCCESS on success, else SQL_ERROR
-//
-SQLRETURN GetResultColumn(
-    SQLGUID      sessionId,
-    SQLUSMALLINT taskId,
-    SQLUSMALLINT columnNumber,
-    SQLSMALLINT  *dataType,
-    SQLULEN      *columnSize,
-    SQLSMALLINT  *decimalDigits,
-    SQLSMALLINT  *nullable
-)
-{
-    LOG("nativecsharpextension::GetResultColumn");
-    return g_dotnet_runtime->call_managed_method<decltype(&GetResultColumn)>(nameof(GetResultColumn),
-        sessionId,
-        taskId,
-        columnNumber,
-        dataType,
-        columnSize,
-        decimalDigits,
-        nullable);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Name: GetResults
-//
-// Description:
-//  Returns the output data as well as the null map retrieved from the user program
-//
-// Returns:
-//  SQL_SUCCESS on success, else SQL_ERROR
-//
-SQLRETURN GetResults(
-    SQLGUID      sessionId,
-    SQLUSMALLINT taskId,
-    SQLULEN      *rowsNumber,
-    SQLPOINTER   **data,
-    SQLINTEGER   ***strLen_or_Ind
-)
-{
-    LOG("nativecsharpextension::GetResults");
-    return g_dotnet_runtime->call_managed_method<decltype(&GetResults)>(nameof(GetResults),
-        sessionId,
-        taskId,
-        rowsNumber,
-        data,
-        strLen_or_Ind);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Name: GetOutputParam
-//
-// Description:
-//  Returns the output parameter's data.
-//
-// Returns:
-//  SQL_SUCCESS on success, else SQL_ERROR
-//
-SQLRETURN GetOutputParam(
-    SQLGUID      sessionId,
-    SQLUSMALLINT taskId,
-    SQLUSMALLINT paramnumber,
-    SQLPOINTER   *paramValue,
-    SQLINTEGER   *strLen_or_Ind
-)
-{
-    LOG("nativecsharpextension::GetOutputParam");
-    return g_dotnet_runtime->call_managed_method<decltype(&GetOutputParam)>(nameof(GetOutputParam),
-        sessionId,
-        taskId,
-        paramnumber,
-        paramValue,
-        strLen_or_Ind);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Name: CleanupSession
-//
-// Description:
-//  Cleans up the output data buffers that we persist for
-//  ExtHost to finish processing the data
-//
-// Returns:
-//  SQL_SUCCESS on success, else SQL_ERROR
-//
-SQLRETURN CleanupSession(SQLGUID sessionId, SQLUSMALLINT taskId)
-{
-    LOG("nativecsharpextension::CleanupSession");
-    return g_dotnet_runtime->call_managed_method<decltype(&CleanupSession)>(nameof(CleanupSession),
-        sessionId,
-        taskId);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Name: Cleanup
-//
-// Description:
-//  Completely cleans up the extension
-//
-// Returns:
-//  SQL_SUCCESS on success, else SQL_ERROR
-//
-SQLRETURN Cleanup()
-{
-    LOG("nativecsharpextension::Cleanup");
-    delete g_dotnet_runtime;
-    return SQL_SUCCESS;
 }
